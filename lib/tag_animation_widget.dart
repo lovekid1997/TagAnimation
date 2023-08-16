@@ -13,7 +13,7 @@ class TagAnimation extends StatefulWidget {
     required this.controller,
     required this.height,
     this.animationType = TagAnimationType.transition,
-    this.scrollDirection = Axis.vertical,
+    this.scrollDirection = Axis.horizontal,
   });
 
   final TagAnimationController controller;
@@ -31,7 +31,6 @@ class _TagAnimationState extends State<TagAnimation> {
   void initState() {
     _subscription =
         widget.controller._streamController.stream.listen(onListener);
-
     super.initState();
   }
 
@@ -64,15 +63,14 @@ class _TagAnimationState extends State<TagAnimation> {
   }
 
   var animateKey = GlobalKey<AnimatedListState>();
-  int currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: widget.height,
       child: AnimatedList(
-        scrollDirection: widget.scrollDirection,
         key: animateKey,
+        scrollDirection: widget.scrollDirection,
         itemBuilder: (context, index, animation) => _AnimationWidget(
           animation: animation,
           type: widget.animationType,

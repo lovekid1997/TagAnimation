@@ -61,7 +61,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         );
       },
-      itemCount: 1,
+      itemCount: 3,
     );
     super.initState();
   }
@@ -100,6 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TagAnimation(
             controller: tagAnimationController,

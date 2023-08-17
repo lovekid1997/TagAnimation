@@ -14,12 +14,14 @@ class TagAnimation extends StatefulWidget {
     required this.height,
     this.animationType = TagAnimationType.transition,
     this.scrollDirection = Axis.horizontal,
+    this.scrollController,
   });
 
   final TagAnimationController controller;
   final double height;
   final TagAnimationType animationType;
   final Axis scrollDirection;
+  final ScrollController? scrollController;
   @override
   State<TagAnimation> createState() => _TagAnimationState();
 }
@@ -70,6 +72,7 @@ class _TagAnimationState extends State<TagAnimation> {
       height: widget.height,
       child: AnimatedList(
         key: animateKey,
+        controller: widget.scrollController,
         scrollDirection: widget.scrollDirection,
         itemBuilder: (context, index, animation) => _AnimationWidget(
           animation: animation,
@@ -77,6 +80,7 @@ class _TagAnimationState extends State<TagAnimation> {
           child: _list[index].rawChip,
         ),
         initialItemCount: _list.length,
+        padding: EdgeInsets.zero,
       ),
     );
   }
@@ -141,7 +145,9 @@ class TagAnimationController {
   }
 
   void onAdd(TagWrapper tagWrapper) {
-    _streamController.sink.add({'onAdd': tagWrapper});
+    _streamController.sink.add({
+      'onAdd': tagWrapper,
+    });
   }
 
   void onAddAll({

@@ -23,12 +23,12 @@ jobs:
               const prNumber = pr.number;
               const branchName = pr.head.ref;
               const prTitle = pr.title.toLowerCase();
-              const newLabels = [];
+              const folderLabels = ['ADMIN', 'CDP FE', 'CDP BE', 'API'];
+              const newFolderLabels = [];
 
               console.log(`🔍 PR #${prNumber} on branch: ${branchName}`);
               console.log(`📝 Title: ${pr.title}`);
 
-              // Lấy danh sách file thay đổi
               const { data: files } = await github.rest.pulls.listFiles({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -38,7 +38,6 @@ jobs:
               const filenames = files.map(f => f.filename);
               console.log('📂 Changed files:', filenames);
 
-              // Kiểm tra folder
               const hasAdminChanges = filenames.some(name => name.startsWith('mmenu-admin/'));
               const hasCdpFEChanges = filenames.some(name => name.startsWith('mmenu-cdp/client/'));
               const hasCdpBEChanges = filenames.some(name => name.startsWith('mmenu-cdp/server/'));
@@ -51,35 +50,34 @@ jobs:
                 'API': hasApiChanges,
               });
 
-              if (hasAdminChanges) newLabels.push('ADMIN');
-              if (hasCdpFEChanges) newLabels.push('CDP FE');
-              if (hasCdpBEChanges) newLabels.push('CDP BE');
-              if (hasApiChanges) newLabels.push('API');
+              if (hasAdminChanges) newFolderLabels.push('ADMIN');
+              if (hasCdpFEChanges) newFolderLabels.push('CDP FE');
+              if (hasCdpBEChanges) newFolderLabels.push('CDP BE');
+              if (hasApiChanges) newFolderLabels.push('API');
 
-              if (newLabels.length > 0) {
-                // 🔄 Lấy label hiện có
-                const { data: currentLabelsData } = await github.rest.issues.listLabelsOnIssue({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: prNumber
-                });
+              const { data: currentLabelsData } = await github.rest.issues.listLabelsOnIssue({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber
+              });
+              const currentLabels = currentLabelsData.map(label => label.name);
 
-                const currentLabels = currentLabelsData.map(label => label.name);
 
-                const mergedLabels = Array.from(new Set([...currentLabels, ...newLabels]));
+              // Loại bỏ label cũ thuộc nhóm folder
+              const preservedLabels = currentLabels.filter(label => !folderLabels.includes(label));
 
-                // 🏷️ Thêm toàn bộ label
-                await github.rest.issues.setLabels({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: prNumber,
-                  labels: mergedLabels
-                });
+              // Hợp nhất với label mới
+              const finalLabels = Array.from(new Set([...preservedLabels, ...newFolderLabels]));
 
-                console.log(`🏷️ Labels after merge: [${mergedLabels.join(', ')}]`);
-              } else {
-                console.log('⚠️ No matching folder changes — no labels applied.');
-              }
+              // Set lại toàn bộ label
+              await github.rest.issues.setLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                labels: finalLabels
+              });
+
+              console.log(`🏷️ Final labels set on PR #${prNumber}: [${finalLabels.join(', ')}]`);
             } catch (error) {
               console.error(`❌ Failed to label PR:`, error);
             }

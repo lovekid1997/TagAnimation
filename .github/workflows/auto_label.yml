@@ -20,58 +20,49 @@ jobs:
             const prTitle = context.payload.pull_request.title.toLowerCase();
             const labels = [];
             
-            // Dựa trên tên branch
-            if (branchName.includes('feature') || branchName.includes('feat')) {
-              labels.push('enhancement');
-            }
-            if (branchName.includes('fix') || branchName.includes('bug')) {
-              labels.push('bug');
-            }
-            if (branchName.includes('docs') || branchName.includes('doc')) {
-              labels.push('documentation');
-            }
-            if (branchName.includes('hotfix')) {
-              labels.push('hotfix');
-            }
+            // Lấy danh sách files thay đổi
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number
+            });
+            
+            console.log('Changed files:', files.map(f => f.filename));
+            
+            // Kiểm tra folder nào có thay đổi
+            const hasAdminChanges = changedFiles.some(file => file.startsWith('mmenu-admin/'));
+            const hasCdpChanges = changedFiles.some(file => file.startsWith('mmenu-cdp/'));
+            const hasApiChanges = changedFiles.some(file => file.startsWith('mmenu-api/'));
+            
+            console.log('Folder changes detected:', {
+              admin: hasAdminChanges,
+              cdp: hasCdpChanges, 
+              api: hasApiChanges
+            });
             
             // Dựa trên title
             if (prTitle.includes('wip') || prTitle.includes('draft')) {
               labels.push('work in progress');
             }
             
-            // Label mặc định
-            if (labels.length === 0) {
-              labels.push('needs review');
-            } else {
-              labels.push('needs review');
+            // Dựa trên files thay đổi
+            const changedFiles = files.map(f => f.filename);
+            
+            // ADMIN - mmenu-admin folder
+            if (hasAdminChanges) {
+              labels.push('ADMIN');
             }
             
+            // CDP - mmenu-cdp folder  
+            if (hasCdpChanges) { 
+              labels.push('CDP');
+            }
+            
+            // API - mmenu-api folder
+            if (hasApiChanges) {
+              labels.push('API');
+            }
+            
+
             console.log(`Branch: ${branchName}`);
             console.log(`Adding labels: ${labels.join(', ')}`);
-            
-            // Thêm labels (chỉ thêm nếu chưa có)
-            try {
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-                labels: labels
-              });
-              console.log('Labels added successfully');
-            } catch (error) {
-              console.log('Error adding labels:', error.message);
-              // Thử từng label riêng lẻ
-              for (const label of labels) {
-                try {
-                  await github.rest.issues.addLabels({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: context.payload.pull_request.number,
-                    labels: [label]
-                  });
-                  console.log(`Added label: ${label}`);
-                } catch (e) {
-                  console.log(`Failed to add label ${label}:`, e.message);
-                }
-              }
-            }

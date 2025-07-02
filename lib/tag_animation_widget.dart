@@ -38,7 +38,7 @@ class _TagAnimationState extends State<TagAnimation> {
 
   void onListener(Map<String, dynamic> data) {
     switch (data.keys.firstOrNull) {
-      case 'onDelete':
+      case 'onDeletezxcxzcxzc':
         _onDelete(data);
         break;
       case 'onAdd':

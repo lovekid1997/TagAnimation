@@ -57,4 +57,17 @@ jobs:
             
 
             console.log(`Branch: ${branchName}`);
-            console.log(`Adding labels: ${labels.join(', ')}`);
+            try {
+              const prNumber = context.payload.pull_request.number;
+
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                labels: labels
+              });
+
+              console.log(`✅ Successfully added label ${labels.join(', ')} to PR #${prNumber}`);
+            } catch (error) {
+              console.error(`❌ Failed to add label: ${error.message}`);
+            }

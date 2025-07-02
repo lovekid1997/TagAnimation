@@ -23,7 +23,7 @@ jobs:
               const prNumber = pr.number;
               const branchName = pr.head.ref;
               const prTitle = pr.title.toLowerCase();
-              const labels = [];
+              const newLabels = [];
 
               console.log(`🔍 PR #${prNumber} on branch: ${branchName}`);
               console.log(`📝 Title: ${pr.title}`);
@@ -51,20 +51,32 @@ jobs:
                 'API': hasApiChanges,
               });
 
-              if (hasAdminChanges) labels.push('ADMIN');
-              if (hasCdpFEChanges) labels.push('CDP FE');
-              if (hasCdpBEChanges) labels.push('CDP BE');
-              if (hasApiChanges) labels.push('API');
+              if (hasAdminChanges) newLabels.push('ADMIN');
+              if (hasCdpFEChanges) newLabels.push('CDP FE');
+              if (hasCdpBEChanges) newLabels.push('CDP BE');
+              if (hasApiChanges) newLabels.push('API');
 
-              if (labels.length > 0) {
-                await github.rest.issues.addLabels({
+              if (newLabels.length > 0) {
+                // 🔄 Lấy label hiện có
+                const { data: currentLabelsData } = await github.rest.issues.listLabelsOnIssue({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber
+                });
+
+                const currentLabels = currentLabelsData.map(label => label.name);
+
+                const mergedLabels = Array.from(new Set([...currentLabels, ...newLabels]));
+
+                // 🏷️ Thêm toàn bộ label
+                await github.rest.issues.setLabels({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: prNumber,
-                  labels: labels
+                  labels: mergedLabels
                 });
 
-                console.log(`🏷️ Added labels [${labels.join(', ')}] to PR #${prNumber}`);
+                console.log(`🏷️ Labels after merge: [${mergedLabels.join(', ')}]`);
               } else {
                 console.log('⚠️ No matching folder changes — no labels applied.');
               }

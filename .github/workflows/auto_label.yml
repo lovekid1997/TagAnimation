@@ -30,9 +30,9 @@ jobs:
             console.log('Changed files:', files.map(f => f.filename));
             
             // Kiểm tra folder nào có thay đổi
-            const hasAdminChanges = files.some(file => startsWith('mmenu-admin/', file));
-            const hasCdpChanges = files.some(file => startsWith('mmenu-cdp/', file));
-            const hasApiChanges = files.some(file => startsWith('mmenu-api/', file));
+            const hasAdminChanges = files.some(file => file.filename.startsWith('mmenu-admin/'));
+            const hasCdpChanges = files.some(file => file.filename.startsWith('mmenu-cdp/'));
+            const hasApiChanges = files.some(file => file.filename.startsWith('mmenu-api/'));
             
             console.log('Folder changes detected:', {
               admin: hasAdminChanges,

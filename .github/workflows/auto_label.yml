@@ -30,23 +30,15 @@ jobs:
             console.log('Changed files:', files.map(f => f.filename));
             
             // Kiểm tra folder nào có thay đổi
-            const hasAdminChanges = changedFiles.some(file => file.startsWith('mmenu-admin/'));
-            const hasCdpChanges = changedFiles.some(file => file.startsWith('mmenu-cdp/'));
-            const hasApiChanges = changedFiles.some(file => file.startsWith('mmenu-api/'));
+            const hasAdminChanges = files.some(file => file.startsWith('mmenu-admin/'));
+            const hasCdpChanges = files.some(file => file.startsWith('mmenu-cdp/'));
+            const hasApiChanges = files.some(file => file.startsWith('mmenu-api/'));
             
             console.log('Folder changes detected:', {
               admin: hasAdminChanges,
               cdp: hasCdpChanges, 
               api: hasApiChanges
             });
-            
-            // Dựa trên title
-            if (prTitle.includes('wip') || prTitle.includes('draft')) {
-              labels.push('work in progress');
-            }
-            
-            // Dựa trên files thay đổi
-            const changedFiles = files.map(f => f.filename);
             
             // ADMIN - mmenu-admin folder
             if (hasAdminChanges) {

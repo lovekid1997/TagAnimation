@@ -1,42 +1,17 @@
-name: Smart Auto Label
+name: Auto Label PR
 on:
   pull_request:
-    types: [opened, edited]
+    types: [opened, synchronize]
 
 jobs:
-  auto-label:
+  label:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Label based on branch name
-        uses: actions/github-script@v6
+      - uses: actions/labeler@v5
         with:
-          script: |
-            const { context, github } = require('@actions/github');
-            const branchName = context.payload.pull_request.head.ref;
-            const labels = [];
-            
-            // Gắn label dựa trên tên branch
-            if (branchName.startsWith('feat/')) {
-              labels.push('enhancement');
-            } else if (branchName.startsWith('fix/')) {
-              labels.push('bug');
-            } else if (branchName.startsWith('hot-fix/')) {
-              labels.push('hotfix');
-            }
-            
-            // Gắn label dựa trên title PR
-            const title = context.payload.pull_request.title.toLowerCase();
-            if (title.includes('wip') || title.includes('draft')) {
-              labels.push('work in progress');
-            }
-            
-            if (labels.length > 0) {
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-                labels: labels
-              });
-            }
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          configuration-path: '.github/labeler.yml'
+          sync-labels: true

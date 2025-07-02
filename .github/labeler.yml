@@ -1,0 +1,17 @@
+# File: .github/labeler.yml
+
+# Frontend changes
+"ios":
+  - changed-files:
+    - any-glob-to-any-file: 
+      - "ios/**/*"
+
+"lib":
+  - changed-files:
+    - any-glob-to-any-file: 
+      - "ios/**/*"
+
+"linux":
+  - changed-files:
+    - any-glob-to-any-file: 
+      - "ios/**/*"

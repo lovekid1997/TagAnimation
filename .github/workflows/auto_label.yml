@@ -18,11 +18,11 @@ jobs:
             const labels = [];
             
             // Gắn label dựa trên tên branch
-            if (branchName.startsWith('feature/')) {
+            if (branchName.startsWith('feat/')) {
               labels.push('enhancement');
             } else if (branchName.startsWith('fix/')) {
               labels.push('bug');
-            } else if (branchName.startsWith('hotfix/')) {
+            } else if (branchName.startsWith('hot-fix/')) {
               labels.push('hotfix');
             }
             

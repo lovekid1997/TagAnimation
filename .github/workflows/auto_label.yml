@@ -1,0 +1,42 @@
+name: Smart Auto Label
+on:
+  pull_request:
+    types: [opened, edited]
+
+jobs:
+  auto-label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Label based on branch name
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { context, github } = require('@actions/github');
+            const branchName = context.payload.pull_request.head.ref;
+            const labels = [];
+            
+            // Gắn label dựa trên tên branch
+            if (branchName.startsWith('feature/')) {
+              labels.push('enhancement');
+            } else if (branchName.startsWith('fix/')) {
+              labels.push('bug');
+            } else if (branchName.startsWith('hotfix/')) {
+              labels.push('hotfix');
+            }
+            
+            // Gắn label dựa trên title PR
+            const title = context.payload.pull_request.title.toLowerCase();
+            if (title.includes('wip') || title.includes('draft')) {
+              labels.push('work in progress');
+            }
+            
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                labels: labels
+              });
+            }

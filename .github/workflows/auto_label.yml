@@ -1,7 +1,8 @@
 name: Auto Label by Branch
+
 on:
   pull_request:
-    types: [opened, edited]
+    types: [opened, edited, synchronize] 
 
 jobs:
   auto-label:
@@ -10,64 +11,63 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
+
     steps:
       - name: Auto Label PR
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const branchName = context.payload.pull_request.head.ref;
-            const prTitle = context.payload.pull_request.title.toLowerCase();
-            const labels = [];
-            
-            // Lấy danh sách files thay đổi
-            const { data: files } = await github.rest.pulls.listFiles({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number
-            });
-            
-            console.log('Changed files:', files.map(f => f.filename));
-            
-            // Kiểm tra folder nào có thay đổi
-            const hasAdminChanges = files.some(file => file.filename.startsWith('mmenu-admin/'));
-            const hasCdpChanges = files.some(file => file.filename.startsWith('mmenu-cdp/'));
-            const hasApiChanges = files.some(file => file.filename.startsWith('mmenu-api/'));
-            
-            console.log('Folder changes detected:', {
-              admin: hasAdminChanges,
-              cdp: hasCdpChanges, 
-              api: hasApiChanges
-            });
-            
-            // ADMIN - mmenu-admin folder
-            if (hasAdminChanges) {
-              labels.push('ADMIN');
-            }
-            
-            // CDP - mmenu-cdp folder  
-            if (hasCdpChanges) { 
-              labels.push('CDP');
-            }
-            
-            // API - mmenu-api folder
-            if (hasApiChanges) {
-              labels.push('API');
-            }
-            
-
-            console.log(`Branch: ${branchName}`);
             try {
-              const prNumber = context.payload.pull_request.number;
+              const pr = context.payload.pull_request;
+              const prNumber = pr.number;
+              const branchName = pr.head.ref;
+              const prTitle = pr.title.toLowerCase();
+              const labels = [];
 
-              await github.rest.issues.addLabels({
+              console.log(`🔍 PR #${prNumber} on branch: ${branchName}`);
+              console.log(`📝 Title: ${pr.title}`);
+
+              // Lấy danh sách file thay đổi
+              const { data: files } = await github.rest.pulls.listFiles({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: prNumber,
-                labels: labels
+                pull_number: prNumber
               });
 
-              console.log(`✅ Successfully added label ${labels.join(', ')} to PR #${prNumber}`);
+              const filenames = files.map(f => f.filename);
+              console.log('📂 Changed files:', filenames);
+
+              // Kiểm tra folder
+              const hasAdminChanges = filenames.some(name => name.startsWith('mmenu-admin/'));
+              const hasCdpFEChanges = filenames.some(name => name.startsWith('mmenu-cdp/client/'));
+              const hasCdpBEChanges = filenames.some(name => name.startsWith('mmenu-cdp/server/'));
+              const hasApiChanges = filenames.some(name => name.startsWith('mmenu-api/'));
+
+              console.log('✅ Folder changes detected:', {
+                'ADMIN': hasAdminChanges,
+                'CDP FE': hasCdpFEChanges,
+                'CDP BE': hasCdpBEChanges,
+                'API': hasApiChanges,
+              });
+
+              if (hasAdminChanges) labels.push('ADMIN');
+              if (hasCdpFEChanges) labels.push('CDP FE');
+              if (hasCdpBEChanges) labels.push('CDP BE');
+              if (hasApiChanges) labels.push('API');
+
+              if (labels.length > 0) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  labels: labels
+                });
+
+                console.log(`🏷️ Added labels [${labels.join(', ')}] to PR #${prNumber}`);
+              } else {
+                console.log('⚠️ No matching folder changes — no labels applied.');
+              }
             } catch (error) {
-              console.error(`❌ Failed to add label: ${error.message}`);
+              console.error(`❌ Failed to label PR:`, error);
             }
